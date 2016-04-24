@@ -1,0 +1,19 @@
+{
+  "name": "log4js-dist",
+  "version": "0.1.0",
+  "description": "",
+  "main": "log4js.combined.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khejing/log4js-dist.git"
+  },
+  "author": "Will Lee",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/khejing/log4js-dist/issues"
+  },
+  "homepage": "https://github.com/khejing/log4js-dist#readme"
+}
