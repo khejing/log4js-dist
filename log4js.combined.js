@@ -526,7 +526,7 @@ Log4js.Logger.prototype = {
 	 */
 	windowError: function(msg, url, line){
 		var message = "Error in (" + (url || window.location) + ") on line "+ line +" with message (" + msg + ")";
-		this.log(Log4js.Level.FATAL, message, null);	
+		this.log(Log4js.Level.FATAL, null, message);
 	},
 	
 	/**
@@ -1632,11 +1632,11 @@ Log4js.FileAppender.prototype = Log4js.extend(new Log4js.Appender(), /** @lends 
 				this.fso.initWithPath(this.file);
     			if(!this.fso.exists()) {
     				//create file if needed
-         		this.fso.create(0x00, 0o600);
+            		this.fso.create(0x00, 0o600);
     			}
 				
  				fileHandle = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-        fileHandle.init( this.fso, 0x04 | 0x08 | 0x10, 0o64, 0);
+        		fileHandle.init( this.fso, 0x04 | 0x08 | 0x10, 0o64, 0);
 				var line = this.layout.format(loggingEvent);
         		fileHandle.write(line, line.length); //write data
         		fileHandle.close();
@@ -1975,7 +1975,7 @@ Log4js.HtmlLayout.prototype = Log4js.extend(new Log4js.Layout(), /** @lends Log4
  * @author Stephan Strittmatter
  */
 Log4js.JSONLayout = function() {
-	this.df = new Log4js.DateFormatter();
+       this.df = new Log4js.DateFormatter();
 };
 Log4js.JSONLayout.prototype = Log4js.extend(new Log4js.Layout(), /** @lends Log4js.JSONLayout# */ {
 	/** 
@@ -2007,9 +2007,10 @@ Log4js.JSONLayout.prototype = Log4js.extend(new Log4js.Layout(), /** @lends Log4
 		jsonString += this.formatMessage(loggingEvent.message);
 		jsonString += "\t\"referer\": \"" + referer + "\",\n"; 
 		jsonString += "\t\"useragent\": \"" + useragent + "\",\n"; 
-    //jsonString += "\t\"timestamp\": \"" +  this.df.formatUTCDate(loggingEvent.startTime, "yyyy-MM-ddThh:mm:ssZ") + "\",\n";
-		jsonString += "\t\"timestamp\": \"" +  this.df.formatDate(loggingEvent.startTime, "yyyy-MM-ddThh:mm:ssZ") + "\",\n";
-		jsonString += "\t\"exception\": \"" +  loggingEvent.exception + "\"\n"; 
+    if(loggingEvent.exception){
+      jsonString += "\t\"exception\": \"" +  loggingEvent.exception + "\",\n";
+    }
+		jsonString += "\t\"timestamp\": \"" +  loggingEvent.getFormattedTimestamp() + "\"\n";
 		jsonString += "}}";      
         
         return jsonString;
@@ -2023,7 +2024,7 @@ Log4js.JSONLayout.prototype = Log4js.extend(new Log4js.Layout(), /** @lends Log4
     if((typeof message) == "string") {
       stream += "\t\"message\": \"" + message + "\",\n";
     } else if((typeof message) == "object") {
-      if("message" in message) {
+      if(message && message.message) {
         stream += "\t\"message\": \"" + message.message + "\",\n";
       }
       for(var property in message) {
