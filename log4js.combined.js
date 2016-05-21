@@ -804,9 +804,7 @@ Log4js.AjaxAppender.prototype = Log4js.extend(new Log4js.Appender(), /** @lends 
 	doAppend: function(loggingEvent) {
 		log4jsLogger && log4jsLogger.trace("> AjaxAppender.append");
 	
-		if (this.loggingEventMap.length() <= this.threshold || this.isInProgress === true) {
-			this.loggingEventMap.push(loggingEvent);
-		}
+		this.loggingEventMap.push(loggingEvent);
 		
 		if(this.loggingEventMap.length() >= this.threshold && this.isInProgress === false) {
 			//if threshold is reached send the events and reset current threshold
@@ -865,9 +863,7 @@ Log4js.AjaxAppender.prototype = Log4js.extend(new Log4js.Appender(), /** @lends 
 			content += this.layout.getFooter();
 			
 			var appender = this;
-			if(this.httpRequest === null){
-				this.httpRequest = this.getXmlHttpRequest();
-			}
+			this.httpRequest = this.getXmlHttpRequest();
 			this.httpRequest.onreadystatechange = function() {
 				appender.onReadyStateChanged.call(appender);
 			};
@@ -884,24 +880,6 @@ Log4js.AjaxAppender.prototype = Log4js.extend(new Log4js.Appender(), /** @lends 
       //this.httpRequest.setRequestHeader("Connection", "close");
 			this.httpRequest.send( content );
 			
-			appender = this;
-			
-			try {
-				window.setTimeout(function(){
-					log4jsLogger && log4jsLogger.trace("> AjaxAppender.timeout");
-					appender.httpRequest.onreadystatechange = function(){return;};
-					appender.httpRequest.abort();
-					//this.httpRequest = null;
-					appender.isInProgress = false;
-		
-					if(appender.loggingEventMap.length() > 0) {
-						appender.send();
-					}
-					log4jsLogger && log4jsLogger.trace("< AjaxAppender.timeout");
-				}, this.timeout);
-			} catch (e) {
-				log4jsLogger && log4jsLogger.fatal(e);
-			}
 			log4jsLogger && log4jsLogger.trace("> AjaxAppender.send");
 		}
 	},
@@ -914,6 +892,11 @@ Log4js.AjaxAppender.prototype = Log4js.extend(new Log4js.Appender(), /** @lends 
 		var req = this.httpRequest;
 		if (this.httpRequest.readyState != 4) { 
 			log4jsLogger && log4jsLogger.trace("< AjaxAppender.onReadyStateChanged: readyState " + req.readyState + " != 4");
+      //ready sending data
+      this.isInProgress = false;
+      if(this.loggingEventMap.length() > 0) {
+        this.send();
+      }
 			return; 
 		}
 		
@@ -921,15 +904,16 @@ Log4js.AjaxAppender.prototype = Log4js.extend(new Log4js.Appender(), /** @lends 
 		
 		if (success) {
 			log4jsLogger && log4jsLogger.trace("  AjaxAppender.onReadyStateChanged: success");
-
-			//ready sending data
-			this.isInProgress = false;
-
 		} else {
 			var msg = "  AjaxAppender.onReadyStateChanged: XMLHttpRequest request to URL " + this.loggingUrl + " returned status code " + this.httpRequest.status;
 			log4jsLogger && log4jsLogger.error(msg);
 		}
-		
+		//ready sending data
+		this.isInProgress = false;
+	  if(this.loggingEventMap.length() > 0) {
+			this.send();
+		}
+
 		log4jsLogger && log4jsLogger.trace("< AjaxAppender.onReadyStateChanged: readyState == 4");		
 	},
 	/**
@@ -2452,7 +2436,7 @@ Log4js.DateFormatter.prototype = {
 	  var vHour  = this.addZero(vDate.getHours());
 	  var vMinute = this.addZero(vDate.getMinutes());
 	  var vSecond = this.addZero(vDate.getSeconds());
-    var vMillisecond = this.addZero(vDate.getMilliseconds());
+    var vMillisecond = this.addZeroZero(vDate.getMilliseconds());
 	  var vTimeZone = this.O(vDate);
 	  var vDateString = vFormat.replace(/dd/g, vDay).replace(/MM/g, vMonth).replace(/y{1,4}/g, vYear);
 	  vDateString = vDateString.replace(/hh/g, vHour).replace(/mm/g, vMinute).replace(/ss/g, vSecond).replace(/SSS/g, vMillisecond);
@@ -2494,6 +2478,20 @@ Log4js.DateFormatter.prototype = {
 	 */
 	addZero : function(vNumber) {
 	  return ((vNumber < 10) ? "0" : "") + vNumber;
+	},
+
+	/**
+	 * @private
+	 * @static
+	 */
+	addZeroZero : function(vNumber) {
+    if(vNumber < 10){
+      return '00' + vNumber;
+    }else if (vNumber >= 10 && vNumber < 100){
+      return '0' + vNumber;
+    }else{
+      return vNumber;
+    }
 	},
 
 	/**
